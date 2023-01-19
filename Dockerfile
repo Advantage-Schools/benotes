@@ -51,11 +51,15 @@ RUN docker-php-ext-install \
 COPY ./docker/nginx/default.conf /etc/nginx/sites-enabled/default
 COPY ./docker/entrypoint.sh /entrypoint.d/app_entrypoint.sh
 
-# will be overriden by the bind mount - if used
-COPY . /var/www/
+# Add user for laravel application
+RUN groupadd -g 1000 www
+RUN useradd -u 1000 -ms /bin/bash -g www www
 
-RUN chown -R $user:$user /var/www
+# Copy code to /var/www
+COPY --chown=www:www-data . /var/www
 
+# add root to www group
+RUN chmod -R ug+w /var/www/storage
 
 WORKDIR /var/www
 
