@@ -1,4 +1,4 @@
-FROM php:8.1-fpm
+FROM php:8.1-fpm-alpine
 
 LABEL mantainer="github.com/fr0tt"
 LABEL description="Benotes"
@@ -6,8 +6,10 @@ LABEL description="Benotes"
 ENV user application
 
 ENV TZ=UTC
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-RUN apt update && apt install \
+
+RUN apk --no-cache update && apk --no-cache add \
     git \
     curl \
     curl-dev \
@@ -21,7 +23,6 @@ RUN apt update && apt install \
     postgresql-dev \
     sqlite \
     zip \
-    nginx \
     unzip \
     libzip-dev \
     libmcrypt-dev \
@@ -76,7 +77,7 @@ USER root
 ARG INSTALL_NODE
 RUN if [ "$INSTALL_NODE" = "true" ] ; \
     then \
-    apt install nodejs npm ; \
+    apk --no-cache add nodejs npm ; \
     fi
 
 # will be overriden by the bind mount - if used
