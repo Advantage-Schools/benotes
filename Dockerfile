@@ -1,4 +1,4 @@
-FROM webdevops/php-nginx:8.1-alpine
+FROM webdevops/php-nginx:8.1
 
 LABEL mantainer="github.com/fr0tt"
 LABEL description="Benotes"
@@ -8,7 +8,7 @@ ENV user application
 ENV TZ=UTC
 
 
-RUN apk --no-cache update && apk --no-cache add \
+RUN apt update && apt install \
     git \
     curl \
     curl-dev \
@@ -76,7 +76,7 @@ USER root
 ARG INSTALL_NODE
 RUN if [ "$INSTALL_NODE" = "true" ] ; \
     then \
-    apk --no-cache add nodejs npm ; \
+    apt install nodejs npm ; \
     fi
 
 # will be overriden by the bind mount - if used
