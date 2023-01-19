@@ -23,6 +23,7 @@ RUN apk --no-cache update && apk --no-cache add \
     postgresql-dev \
     sqlite \
     zip \
+    nginx \
     unzip \
     libzip-dev \
     libmcrypt-dev \
