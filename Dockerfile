@@ -52,7 +52,7 @@ COPY ./docker/nginx/default.conf /etc/nginx/sites-enabled/default
 COPY ./docker/entrypoint.sh /entrypoint.d/app_entrypoint.sh
 
 # Add user for laravel application
-RUN adduser -S www -G www
+RUN adduser -S www -G www-data
 
 # Copy code to /var/www
 COPY --chown=www:www-data . /var/www
