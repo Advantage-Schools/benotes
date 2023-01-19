@@ -49,7 +49,7 @@ RUN docker-php-ext-install \
     xml
 
 
-COPY ./docker/nginx/default.conf /etc/nginx/sites-enabled/default
+COPY ./docker/nginx/default.conf /etc/nginx/http.d/default.conf
 COPY ./docker/entrypoint.sh /entrypoint.d/app_entrypoint.sh
 
 # Add user for laravel application
