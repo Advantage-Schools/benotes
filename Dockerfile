@@ -1,59 +1,46 @@
-FROM php:8.1-fpm-alpine
+FROM php:8.1-fpm
 
-LABEL mantainer="github.com/fr0tt"
-LABEL description="Benotes"
+# Set working directory
+WORKDIR /var/www
 
-ENV user www
+# Add docker php ext repo
+ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
 
-ENV TZ=UTC
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+# Install php extensions
+RUN chmod +x /usr/local/bin/install-php-extensions && sync && \
+    install-php-extensions mbstring pdo_pgsql zip exif pcntl gd redis
 
-
-RUN apk --no-cache update && apk --no-cache add \
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libpng-dev \
+    libjpeg62-turbo-dev \
+    libfreetype6-dev \
+    locales \
+    zip \
+    jpegoptim optipng pngquant gifsicle \
+    unzip \
     git \
     curl \
-    curl-dev \
-    zlib-dev \
-    libpng-dev \
-    libjpeg-turbo \
-    libjpeg-turbo-dev \
-    libxml2-dev \
-    libmcrypt-dev \
-    libpq \
-    postgresql-dev \
-    sqlite \
-    zip \
-    nginx \
-    unzip \
-    libzip-dev \
-    libmcrypt-dev \
-    openssl
+    lua-zlib-dev \
+    libmemcached-dev \
+    nginx
 
-RUN docker-php-ext-configure gd \
-    --enable-gd \
-    --with-jpeg
+# Install cron
+RUN apt-get install -y cron
 
-RUN docker-php-ext-install \
-    pdo \
-    pdo_mysql \
-    mysqli \
-    pgsql \
-    pdo_pgsql \
-    opcache \
-    exif \
-    pcntl \
-    bcmath \
-    gd \
-    curl \
-    dom \
-    xml
+# Install supervisor
+RUN apt-get install -y supervisor
 
+# Install composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-COPY ./docker/nginx/default.conf /etc/nginx/http.d/default.conf
-COPY ./docker/entrypoint.sh /entrypoint.d/app_entrypoint.sh
+# Clear cache
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Add user for laravel application
-RUN adduser -S www -G www-data
+RUN groupadd -g 1000 www
+RUN useradd -u 1000 -ms /bin/bash -g www www
 
 # Copy code to /var/www
 COPY --chown=www:www-data . /var/www
@@ -61,28 +48,14 @@ COPY --chown=www:www-data . /var/www
 # add root to www group
 RUN chmod -R ug+w /var/www/storage
 
-WORKDIR /var/www
+# Copy nginx/php/supervisor/cron configs
+RUN cp docker/nginx.conf /etc/nginx/sites-enabled/default
 
-RUN chown -R $user:www-data storage && chmod -R 775 storage
+# PHP Error Log Files
+RUN mkdir /var/log/php
+RUN touch /var/log/php/errors.log && chmod 777 /var/log/php/errors.log
 
+# Deployment steps
+RUN composer install --optimize-autoloader --no-dev
 
-USER $user
-
-
-ARG USE_COMPOSER
-RUN if [ "$USE_COMPOSER" = "true" ] ; \
-    then \
-    composer install --prefer-dist --no-interaction ; \
-    fi
-
-USER root
-
-
-ARG INSTALL_NODE
-RUN if [ "$INSTALL_NODE" = "true" ] ; \
-    then \
-    apk --no-cache add nodejs npm ; \
-    fi
-
-# will be overriden by the bind mount - if used
-RUN ln -snf ../storage/app/public/ public/storage
+EXPOSE 80
