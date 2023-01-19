@@ -1,4 +1,4 @@
-FROM webdevops/php-nginx:8.1
+FROM php:8.1-fpm
 
 LABEL mantainer="github.com/fr0tt"
 LABEL description="Benotes"
@@ -6,7 +6,6 @@ LABEL description="Benotes"
 ENV user application
 
 ENV TZ=UTC
-
 
 RUN apt update && apt install \
     git \
@@ -22,6 +21,7 @@ RUN apt update && apt install \
     postgresql-dev \
     sqlite \
     zip \
+    nginx \
     unzip \
     libzip-dev \
     libmcrypt-dev \
@@ -47,7 +47,7 @@ RUN docker-php-ext-install \
     xml
 
 
-COPY ./docker/nginx/default.conf /opt/docker/etc/nginx/main.conf
+COPY ./docker/nginx/default.conf /etc/nginx/sites-enabled/default
 COPY ./docker/entrypoint.sh /entrypoint.d/app_entrypoint.sh
 
 # will be overriden by the bind mount - if used
